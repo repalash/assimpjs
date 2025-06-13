@@ -27,7 +27,12 @@ jobs:
     - name: Get Emscripten
       run: ./tools/setup_emscripten_win.bat
     - name: Build WASM
-      run: ./tools/build_wasm_win.bat ${{matrix.configuration}}
+      run: |
+        if [ "${{ matrix.configuration }}" = "Release" ]; then
+          ./tools/build_wasm_win_dist.bat Release
+        else
+          ./tools/build_wasm_win.bat ${{ matrix.configuration }}
+        fi
     - name: Update Package
       if: ${{ matrix.configuration == 'Release' }}
       run: |

@@ -208,11 +208,11 @@ const ajs = await assimpjs({
 })
 ```
 
-Changes - 
-[x] - Build with FBX export support
-[ ] - Build without import formats that are not supported properly in three.js. (and gltf)
-[ ] - Build with all export formats not in three.js (and gltf)
-[ ] - Run in web worker
+Changes -
+- [x] Build with FBX export support
+- [ ] Build without import formats that are not supported properly in three.js. (and gltf)
+- [ ] Build with all export formats not in three.js (and gltf)
+- [ ] Run in web worker
 
 ## Three.js Export to FBX
 

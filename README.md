@@ -194,3 +194,71 @@ If you want to debug the code, it's useful to build a native project. To do that
 ## How to run locally?
 
 To run the demo and the examples locally, you have to start a web server. Run `npm install` from the root directory, then run `npm start` and visit `http://localhost:8080`.
+
+# Changes in this fork
+
+[x] - Build with FBX export support
+[ ] - Build without import formats that are not supported properly in three.js. (and gltf)
+[ ] - Build with all export formats not in three.js (and gltf)
+[ ] - Run in web worker
+
+## Three.js Export to FBX
+
+This can be used to export and download fbx files from three.js scenes. This is done by first exporting to glTF, then converting to FBX using assimpjs.
+
+```js
+// Export a three.js scene to FBX using assimpjs (vanilla JS)
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
+
+const exporter = new GLTFExporter();
+exporter.parse(scene, function (gltf) {
+    // Convert glTF JSON to Uint8Array
+    const gltfStr = JSON.stringify(gltf);
+    const gltfBytes = new TextEncoder().encode(gltfStr);
+
+    assimpjs().then(ajs => {
+        let fileList = new ajs.FileList();
+        fileList.AddFile('scene.gltf', gltfBytes);
+        let result = ajs.ConvertFileList(fileList, 'fbx');
+        if (result.IsSuccess() && result.FileCount() > 0) {
+            let fbxFile = result.GetFile(0);
+            let blob = new Blob([fbxFile.GetContent()], {type: 'application/octet-stream'});
+            let url = URL.createObjectURL(blob);
+            let a = document.createElement('a');
+            a.href = url;
+            a.download = 'scene.fbx';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    });
+});
+```
+
+Note - set the export option `embedImages: true`(depending on three.js version) in the `GLTFExporter` to embed images in the glTF file, otherwise you will need to provide the images separately.
+
+It can also be used in three.js to load unsupported file formats, convert to gltf2 and then use the `GLTFLoader` to load the model into a three.js scene.
+
+```js
+// Load an unsupported file (e.g. .obj) into three.js via assimpjs and GLTFLoader
+fetch('model.obj')
+    .then(res => res.arrayBuffer())
+    .then(objBuffer => assimpjs().then(ajs => {
+    let fileList = new ajs.FileList();
+    fileList.AddFile('model.obj', new Uint8Array(objBuffer));
+    let result = ajs.ConvertFileList(fileList, 'gltf2');
+    if (result.IsSuccess() && result.FileCount() > 0) {
+        let gltfFile = result.GetFile(0);
+        let blob = new Blob([gltfFile.GetContent()], {type: 'application/json'});
+        let url = URL.createObjectURL(blob);
+        const loader = new THREE.GLTFLoader();
+        loader.load(url, gltf => {
+            scene.add(gltf.scene);
+            URL.revokeObjectURL(url);
+        });
+    }
+}));
+```
+
+## Threepipe
+
+This is available as a [package](https://threepipe.org/package/plugin-assimpjs.html) in [threepipe](https://threepipe.org) and [webgi](https://webgi.dev) and can be used directly to load many file formats and export to fbx, assjson etc.

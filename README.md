@@ -197,6 +197,18 @@ To run the demo and the examples locally, you have to start a web server. Run `n
 
 # Changes in this fork
 
+To use this, simply import the library in html and set wasm path - 
+
+```html
+<script src="https://cdn.jsdelivr.net/gh/repalash/assimpjs@fbx/dist/assimpjs.js"></script>
+```
+```typescript
+const ajs = await assimpjs({
+    locateFile: (file: string) => 'https://cdn.jsdelivr.net/gh/repalash/assimpjs@fbx/dist/' + file,
+})
+```
+
+Changes - 
 [x] - Build with FBX export support
 [ ] - Build without import formats that are not supported properly in three.js. (and gltf)
 [ ] - Build with all export formats not in three.js (and gltf)
@@ -216,21 +228,19 @@ exporter.parse(scene, function (gltf) {
     const gltfStr = JSON.stringify(gltf);
     const gltfBytes = new TextEncoder().encode(gltfStr);
 
-    assimpjs().then(ajs => {
-        let fileList = new ajs.FileList();
-        fileList.AddFile('scene.gltf', gltfBytes);
-        let result = ajs.ConvertFileList(fileList, 'fbx');
-        if (result.IsSuccess() && result.FileCount() > 0) {
-            let fbxFile = result.GetFile(0);
-            let blob = new Blob([fbxFile.GetContent()], {type: 'application/octet-stream'});
-            let url = URL.createObjectURL(blob);
-            let a = document.createElement('a');
-            a.href = url;
-            a.download = 'scene.fbx';
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-    });
+    let fileList = new ajs.FileList();
+    fileList.AddFile('scene.gltf', gltfBytes);
+    let result = ajs.ConvertFileList(fileList, 'fbx');
+    if (result.IsSuccess() && result.FileCount() > 0) {
+        let fbxFile = result.GetFile(0);
+        let blob = new Blob([fbxFile.GetContent()], {type: 'application/octet-stream'});
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = 'scene.fbx';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
 });
 ```
 
@@ -242,7 +252,7 @@ It can also be used in three.js to load unsupported file formats, convert to glt
 // Load an unsupported file (e.g. .obj) into three.js via assimpjs and GLTFLoader
 fetch('model.obj')
     .then(res => res.arrayBuffer())
-    .then(objBuffer => assimpjs().then(ajs => {
+    .then(objBuffer => {
     let fileList = new ajs.FileList();
     fileList.AddFile('model.obj', new Uint8Array(objBuffer));
     let result = ajs.ConvertFileList(fileList, 'gltf2');
@@ -256,7 +266,7 @@ fetch('model.obj')
             URL.revokeObjectURL(url);
         });
     }
-}));
+});
 ```
 
 ## Threepipe
